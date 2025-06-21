@@ -79,6 +79,7 @@ export const FinancePage: FC<PageProps> = ({ userId, appId }) => {
                             <th className="p-3">Valor</th>
                             <th className="p-3">Tipo</th>
                             <th className="p-3">Vencimento</th>
+                             <th className="p-3 text-center">Status</th>
                             <th className="p-3 text-center">Ações</th>
                         </tr>
                     </thead>

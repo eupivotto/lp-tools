@@ -73,12 +73,26 @@ export const DashboardPage: FC<PageProps> = ({ userId, appId }) => {
         return Object.entries(sources).map(([name, value]) => ({ name, value }));
     }, [financials]);
 
+    const pendingSummary = useMemo(() => {
+        const pendingItems = financials.filter(item => item.status === 'pending');
+
+        return pendingItems.reduce((acc, item) => {
+            const amount = typeof item.amount === 'number' ? item.amount : 0;
+            if (item.type.includes('income')) {
+                acc.pendingToReceive += amount;
+            } else {
+                acc.pendingToPay += amount;
+            }
+            return acc;
+        }, { pendingToReceive: 0, pendingToPay: 0 });
+    }, [financials]);
+
     const COLORS = ['#0088FE', '#FFBB28'];
 
     return (
         <div>
             <h2 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6">
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                     <h3 className="font-semibold text-gray-600">Receita Total</h3>
                     <p className="text-3xl font-bold text-green-500">R$ {financialSummary.totalIncome.toFixed(2)}</p>
@@ -90,6 +104,23 @@ export const DashboardPage: FC<PageProps> = ({ userId, appId }) => {
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                     <h3 className="font-semibold text-gray-600">Tarefas Pendentes</h3>
                     <p className="text-3xl font-bold text-yellow-500">{tasks.filter(t => !t.completed).length}</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 className="font-semibold text-gray-600 mb-2">Pendências</h3>
+                    <div className="space-y-1">
+                        <div>
+                            <span className="text-sm text-gray-500">A Receber: </span>
+                            <span className="text-xl font-bold text-blue-500">
+                                {pendingSummary.pendingToReceive.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-sm text-gray-500">A Pagar: </span>
+                            <span className="text-xl font-bold text-orange-500">
+                                {pendingSummary.pendingToPay.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
