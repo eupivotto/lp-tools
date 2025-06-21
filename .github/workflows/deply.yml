@@ -37,4 +37,4 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./dist/ # Pasta local que será enviada (Vite gera a 'dist')
-        server-dir: public_html/tools/ # PASTA DE DESTINO NO SERVIDOR (altere se necessário)
+        server-dir: tools.lucaspivotto.dev.br/ # PASTA DE DESTINO NO SERVIDOR (altere se necessário)
