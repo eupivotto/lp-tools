@@ -1,0 +1,40 @@
+# Nome do seu workflow, aparecerá na aba "Actions" do GitHub
+name: Deploy LP-Tools para HostGator
+
+# Gatilho: executa o workflow em todo push para a branch 'main'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest # Usa uma máquina virtual Linux para executar os passos
+
+    steps:
+    # 1. Clona o seu repositório para a máquina virtual
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v4
+
+    # 2. Configura o ambiente Node.js para poder fazer o build
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    # 3. Instala as dependências e faz o build do projeto Vite
+    - name: 🔨 Build Project
+      run: |
+        npm install
+        npm run build
+
+    # 4. Envia os arquivos da pasta 'dist' para a HostGator via FTP
+    - name: 📂 Sync files to HostGator
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./dist/ # Pasta local que será enviada (Vite gera a 'dist')
+        server-dir: public_html/tools/ # PASTA DE DESTINO NO SERVIDOR (altere se necessário)
