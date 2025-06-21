@@ -15,6 +15,7 @@ export interface TaskItem {
   text: string;
   completed: boolean;
   createdAt: string;
+  priority: 'baixa' | 'media' | 'alta'
 }
 
 export interface ActivityLog {
