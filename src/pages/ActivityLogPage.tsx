@@ -65,7 +65,7 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
                     placeholder="Liste as atividades que você fez hoje, uma por linha..."
                     className="w-full p-3 border rounded-lg h-32 mb-4"
                 ></textarea>
-                <button onClick={handleSaveLog} className="bg-blue-500 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-600">
+                <button onClick={handleSaveLog} className="bg-blue-500 cursor-pointer text-white px-6 py-2 rounded-lg shadow hover:bg-blue-600">
                     Salvar Atividades
                 </button>
             </div>
@@ -86,7 +86,7 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
                                 <td className="p-3 text-gray-600 align-top">{log.date ? new Date(log.date).toLocaleDateString('pt-BR') : 'N/A'}</td>
                                 <td className="p-3 whitespace-pre-wrap">{log.activities}</td>
                                 <td className="p-3 text-center align-top">
-                                    <button onClick={() => copyToClipboard(log.activities)} className="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300">
+                                    <button onClick={() => copyToClipboard(log.activities)} className="bg-gray-200 cursor-pointer text-gray-800 px-3 py-1 rounded hover:bg-gray-300">
                                         Copiar
                                     </button>
                                 </td>

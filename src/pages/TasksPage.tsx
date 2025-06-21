@@ -90,13 +90,13 @@ export const TasksPage: FC<PageProps> = ({ userId, appId }) => {
                     <select
                         value={priority}
                         onChange={(e) => setPriority(e.target.value as 'baixa' | 'media' | 'alta')}
-                        className="p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
+                        className="p-3 border rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="media">Média</option>
                         <option value="alta">Alta</option>
                         <option value="baixa">Baixa</option>
                     </select>
-                    <button type="submit" className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-600 transition-colors">
+                    <button type="submit" className="bg-blue-500 cursor-pointer text-white px-6 py-3 rounded-lg shadow hover:bg-blue-600 transition-colors">
                         Adicionar
                     </button>
                 </form>
@@ -113,7 +113,7 @@ export const TasksPage: FC<PageProps> = ({ userId, appId }) => {
                             <span className={`flex-1 ml-4 ${task.completed ? 'line-through' : ''}`}>{task.text}</span>
                             {/* 👇 7. Exibe a pílula de prioridade */}
                             {getPriorityPill(task.priority)}
-                            <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-500 p-2 ml-4">
+                            <button onClick={() => deleteTask(task.id)} className="text-gray-400 cursor-pointer hover:text-red-500 p-2 ml-4">
                                 <Trash2 size={18} />
                             </button>
                         </div>

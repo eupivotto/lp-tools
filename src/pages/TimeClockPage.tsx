@@ -54,7 +54,7 @@ export const TimeClockPage: FC = () => {
                         <input type="time" value={times.lunchEnd} onChange={e => setTimes({...times, lunchEnd: e.target.value})} className="w-full p-2 border rounded-lg" />
                     </div>
                 </div>
-                <button onClick={calculateExitTime} className="w-full bg-blue-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-blue-600 transition-colors">
+                <button onClick={calculateExitTime} className="w-full bg-blue-500 cursor-pointer text-white py-3 rounded-lg text-lg font-semibold hover:bg-blue-600 transition-colors">
                     Calcular Horário de Saída
                 </button>
                 {exitTime && !error && (

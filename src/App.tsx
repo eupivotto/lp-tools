@@ -72,9 +72,9 @@ export default function App() {
                     <NavItem icon={<ClipboardList size={20} />} label="Registro de Atividades" active={activePage === 'activities'} onClick={() => setActivePage('activities')} />
                 </ul>
                  <div className="p-2 border-t border-gray-200">
-                    <button onClick={() => signOut(auth)} className="flex items-center w-full p-3 my-1 rounded-lg text-left text-red-500 hover:bg-red-100 transition-colors duration-200">
+                    <button onClick={() => signOut(auth)} className="flex items-center cursor-pointer w-full p-3 my-1 rounded-lg text-left text-red-500 hover:bg-red-100 transition-colors duration-200">
                         <LogOut size={20} />
-                        <span className="ml-4 font-medium">Sair</span>
+                        <span className="ml-4 font-medium ">Sair</span>
                     </button>
                 </div>
             </nav>

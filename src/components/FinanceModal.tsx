@@ -68,8 +68,8 @@ export const FinanceModal: FC<FinanceModalProps> = ({ item, onClose, collectionP
                         </select>
                     </div>
                     <div className="flex justify-end gap-4">
-                        <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Cancelar</button>
-                        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">{item ? 'Salvar Alterações' : 'Adicionar'}</button>
+                        <button type="button" onClick={onClose} className="bg-gray-200 cursor-pointer text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Cancelar</button>
+                        <button type="submit" className="bg-blue-500 cursor-pointer text-white px-4 py-2 rounded-lg hover:bg-blue-600">{item ? 'Salvar Alterações' : 'Adicionar'}</button>
                     </div>
                 </form>
             </div>

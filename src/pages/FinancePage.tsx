@@ -66,7 +66,7 @@ export const FinancePage: FC<PageProps> = ({ userId, appId }) => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-gray-800">Controle Financeiro</h2>
-                <button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition-colors">
+                <button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 cursor-pointer text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition-colors">
                     <Plus size={20} className="mr-2" />
                     Adicionar Lançamento
                 </button>
@@ -102,10 +102,10 @@ export const FinancePage: FC<PageProps> = ({ userId, appId }) => {
                                 <td className="p-3 text-gray-600">{item.date ? new Date(item.date).toLocaleDateString('pt-BR') : 'N/A'}</td>
                                 <td className="p-3 text-center">{getStatusPill(item)}</td>
                                 <td className="p-3 text-center">
-                                    <button onClick={() => handleOpenModal(item)} className="text-gray-500 hover:text-blue-500 p-2">
+                                    <button onClick={() => handleOpenModal(item)} className="text-gray-500 cursor-pointer hover:text-blue-500 p-2">
                                         <Edit size={18} />
                                     </button>
-                                    <button onClick={() => handleDeleteClick(item.id)} className="text-gray-500 hover:text-red-500 p-2">
+                                    <button onClick={() => handleDeleteClick(item.id)} className="text-gray-500 cursor-pointer hover:text-red-500 p-2">
                                         <Trash2 size={18} />
                                     </button>
                                 </td>

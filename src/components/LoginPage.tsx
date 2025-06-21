@@ -20,7 +20,7 @@ export const LoginPage: FC = () => {
                 </div>
                 <button
                     onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-blue-500 text-white rounded-lg font-semibold shadow-md hover:bg-blue-600 transition-all duration-300"
+                    className="w-full flex items-center cursor-pointer justify-center gap-3 py-3 px-4 bg-blue-500 text-white rounded-lg font-semibold shadow-md hover:bg-blue-600 transition-all duration-300"
                 >
                     <Chrome size={20} />
                     Entrar com o Google
