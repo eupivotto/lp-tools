@@ -1,20 +1,29 @@
 import { useEffect, useState, type FC } from "react";
 import type { ActivityLog, PageProps } from "../interface/types";
-// Importe as funções 'doc', 'updateDoc', e 'deleteDoc' do Firestore
 import { addDoc, collection, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { Edit, Trash2 } from "lucide-react"; // Adicionando ícones para botões
+
+// Estado inicial para o formulário de um novo log
+const initialLogState = {
+    title: '',
+    project: '',
+    responsible: '',
+    timeSpent: '',
+    details: '',
+    date: new Date().toISOString().split('T')[0],
+};
 
 export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
     const [logs, setLogs] = useState<ActivityLog[]>([]);
-    const [newLog, setNewLog] = useState('');
+    // --- ESTADO MODIFICADO PARA O FORMULÁRIO ESTRUTURADO ---
+    const [newLogData, setNewLogData] = useState<Omit<ActivityLog, 'id'>>(initialLogState);
+    
+    // --- ESTADOS PARA EDIÇÃO E EXCLUSÃO ---
+    const [editingLog, setEditingLog] = useState<ActivityLog | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+    
     const [notification, setNotification] = useState<{ message: string; type: string } | null>(null);
-
-    // --- NOVOS ESTADOS PARA EDIÇÃO ---
-    // Armazena o ID do log que está sendo editado
-    const [editingLogId, setEditingLogId] = useState<string | null>(null); 
-    // Armazena o texto do log que está sendo editado
-    const [editingText, setEditingText] = useState(''); 
-
     const logsCollectionPath = `artifacts/${appId}/users/${userId}/activityLogs`;
 
     useEffect(() => {
@@ -33,74 +42,71 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleSaveNewLog = async () => {
-        if (newLog.trim() === '') return;
-        try {
-            await addDoc(collection(db, logsCollectionPath), {
-                activities: newLog,
-                date: new Date().toISOString().split('T')[0]
-            });
-            setNewLog('');
-            showNotification('Atividade registrada com sucesso!');
-        } catch (error) {
-            showNotification('Erro ao registrar atividade.', 'error');
-            console.error("Erro ao adicionar documento: ", error);
+    // --- FUNÇÃO DE INPUT GENÉRICA PARA O FORMULÁRIO ---
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        // Se estiver editando, atualiza o estado de edição, senão, o de novo log
+        if (editingLog) {
+            setEditingLog({ ...editingLog, [name]: value });
+        } else {
+            setNewLogData({ ...newLogData, [name]: value });
         }
     };
 
-    // --- NOVA FUNÇÃO PARA INICIAR A EDIÇÃO ---
-    const handleStartEdit = (log: ActivityLog) => {
-        setEditingLogId(log.id);
-        setEditingText(log.activities);
-    };
+    // --- LÓGICA DE SALVAR MODIFICADA ---
+    const handleSaveLog = async () => {
+        const dataToSave = editingLog ? { ...editingLog } : { ...newLogData };
 
-    // --- NOVA FUNÇÃO PARA CANCELAR A EDIÇÃO ---
-    const handleCancelEdit = () => {
-        setEditingLogId(null);
-        setEditingText('');
-    };
-
-    // --- NOVA FUNÇÃO PARA SALVAR A ATUALIZAÇÃO ---
-    const handleUpdateLog = async () => {
-        if (!editingLogId || editingText.trim() === '') return;
-        
-        const logDocRef = doc(db, logsCollectionPath, editingLogId);
+        if (!dataToSave.title || !dataToSave.details) {
+            showNotification('Título e Detalhes são campos obrigatórios.', 'error');
+            return;
+        }
 
         try {
-            await updateDoc(logDocRef, {
-                activities: editingText
-            });
-            showNotification('Registro atualizado com sucesso!');
-            handleCancelEdit(); // Reseta o estado de edição
-        } catch (error) {
-            showNotification('Falha ao atualizar o registro.', 'error');
-            console.error("Erro ao atualizar o documento: ", error);
-        }
-    };
-
-    // --- NOVA FUNÇÃO PARA EXCLUIR UM REGISTRO ---
-    const handleDeleteLog = async (logId: string) => {
-        // Confirmação antes de excluir é uma boa prática
-        if (window.confirm('Tem certeza que deseja excluir este registro?')) {
-            const logDocRef = doc(db, logsCollectionPath, logId);
-            try {
-                await deleteDoc(logDocRef);
-                showNotification('Registro excluído com sucesso!');
-            } catch (error) {
-                showNotification('Falha ao excluir o registro.', 'error');
-                console.error("Erro ao excluir o documento: ", error);
+            if (editingLog) {
+                // Atualiza um log existente
+                const logDocRef = doc(db, logsCollectionPath, editingLog.id);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id, ...logToUpdate } = editingLog; // Remove o ID do objeto a ser salvo
+                await updateDoc(logDocRef, logToUpdate);
+                showNotification('Registro atualizado com sucesso!');
+                setEditingLog(null); // Sai do modo de edição
+            } else {
+                // Adiciona um novo log
+                await addDoc(collection(db, logsCollectionPath), dataToSave);
+                showNotification('Atividade registrada com sucesso!');
+                setNewLogData(initialLogState); // Limpa o formulário
             }
+        } catch (error) {
+            showNotification('Ocorreu um erro ao salvar o registro.', 'error');
+            console.error("Erro ao salvar documento: ", error);
         }
     };
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text).then(() => {
-            showNotification('Atividades copiadas para a área de transferência!');
-        }).catch(err => {
-            showNotification('Falha ao copiar texto.', 'error');
-            console.error('Falha ao copiar texto: ', err);
-        });
+    // --- FUNÇÕES PARA EDIÇÃO E EXCLUSÃO ---
+    const handleStartEdit = (log: ActivityLog) => {
+        setEditingLog(log);
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo para ver o formulário
     };
+
+    const handleCancelEdit = () => {
+        setEditingLog(null);
+    };
+
+    const handleDeleteLog = async () => {
+        if (!itemToDelete) return;
+        try {
+            await deleteDoc(doc(db, logsCollectionPath, itemToDelete));
+            showNotification('Registro excluído com sucesso!');
+        } catch (error) {
+            showNotification('Falha ao excluir o registro.', 'error');
+        } finally {
+            setItemToDelete(null); // Fecha o modal de confirmação (implícito)
+        }
+    };
+
+    // Determina qual objeto de dados usar no formulário (novo ou em edição)
+    const formDataSource = editingLog || newLogData;
 
     return (
         <div>
@@ -109,81 +115,94 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
                     {notification.message}
                 </div>
             )}
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">Registro de Atividades Diárias (Jira)</h2>
-            <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-                <h3 className="font-semibold text-lg mb-2">Adicionar novo registro</h3>
-                <textarea
-                    value={newLog}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewLog(e.target.value)}
-                    placeholder="Liste as atividades que você fez hoje, uma por linha..."
-                    className="w-full p-3 border rounded-lg h-32 mb-4"
-                ></textarea>
-                <button onClick={handleSaveNewLog} className="bg-blue-500 cursor-pointer text-white px-6 py-2 rounded-lg shadow hover:bg-blue-600">
-                    Salvar Atividades
-                </button>
+            
+            {/* --- NOVO FORMULÁRIO DE INSERÇÃO/EDIÇÃO --- */}
+            <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                    {editingLog ? 'Editar Registro de Atividade' : 'Adicionar Novo Registro'}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Campos do formulário */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Título</label>
+                        <input type="text" name="title" value={formDataSource.title} onChange={handleInputChange} className="mt-1 block w-full p-2 border rounded-md shadow-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Projeto</label>
+                        <input type="text" name="project" value={formDataSource.project} onChange={handleInputChange} className="mt-1 block w-full p-2 border rounded-md shadow-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Responsável</label>
+                        <input type="text" name="responsible" value={formDataSource.responsible} onChange={handleInputChange} className="mt-1 block w-full p-2 border rounded-md shadow-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Tempo Investido (ex: 8h)</label>
+                        <input type="text" name="timeSpent" value={formDataSource.timeSpent} onChange={handleInputChange} className="mt-1 block w-full p-2 border rounded-md shadow-sm" />
+                    </div>
+                     <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Data</label>
+                        <input type="date" name="date" value={formDataSource.date} onChange={handleInputChange} className="mt-1 block w-full p-2 border rounded-md shadow-sm" />
+                    </div>
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Atividades Realizadas (Detalhes)</label>
+                        <textarea name="details" value={formDataSource.details} onChange={handleInputChange} rows={10} className="mt-1 block w-full p-2 border rounded-md shadow-sm" />
+                    </div>
+                </div>
+                <div className="mt-6 flex items-center gap-4">
+                    <button onClick={handleSaveLog} className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors">
+                        {editingLog ? 'Salvar Alterações' : 'Salvar Atividade'}
+                    </button>
+                    {editingLog && (
+                        <button onClick={handleCancelEdit} className="bg-gray-500 text-white px-6 py-2 rounded-lg shadow hover:bg-gray-600 transition-colors">
+                            Cancelar Edição
+                        </button>
+                    )}
+                </div>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-lg mb-4 px-3">Histórico de Atividades</h3>
-                <table className="w-full table-auto">
-                    <thead className="text-left text-gray-600 border-b">
-                        <tr>
-                            <th className="p-3 w-1/6">Data</th>
-                            <th className="p-3 w-3/6">Atividades</th>
-                            <th className="p-3 w-2/6 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {logs.map(log => (
-                            <tr key={log.id} className="border-b last:border-0 hover:bg-gray-50">
-                                <td className="p-3 text-gray-600 align-top">
-                                    {log.date ? new Date(log.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'N/A'}
-                                </td>
-                                
-                                {/* --- LÓGICA DE RENDERIZAÇÃO CONDICIONAL PARA EDIÇÃO --- */}
-                                <td className="p-3 whitespace-pre-wrap align-top">
-                                    {editingLogId === log.id ? (
-                                        <textarea
-                                            value={editingText}
-                                            onChange={(e) => setEditingText(e.target.value)}
-                                            className="w-full p-2 border rounded-lg h-24"
-                                        />
-                                    ) : (
-                                        log.activities
-                                    )}
-                                </td>
-
-                                <td className="p-3 text-center align-top">
-                                    {editingLogId === log.id ? (
-                                        // --- BOTÕES DE SALVAR/CANCELAR EM MODO DE EDIÇÃO ---
-                                        <div className="flex flex-col space-y-2">
-                                            <button onClick={handleUpdateLog} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
-                                                Salvar
-                                            </button>
-                                            <button onClick={handleCancelEdit} className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        // --- BOTÕES PADRÃO (EDITAR, EXCLUIR, COPIAR) ---
-                                        <div className="flex justify-center space-x-2">
-                                            <button onClick={() => handleStartEdit(log)} className="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500">
-                                                Editar
-                                            </button>
-                                            <button onClick={() => handleDeleteLog(log.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                                                Excluir
-                                            </button>
-                                            <button onClick={() => copyToClipboard(log.activities)} className="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300">
-                                                Copiar
-                                            </button>
-                                        </div>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            {/* --- NOVA EXIBIÇÃO EM FORMATO DE CARD --- */}
+            <div className="space-y-6">
+                 <h3 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Histórico de Atividades</h3>
+                {logs.map(log => (
+                    <div key={log.id} className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h4 className="text-xl font-bold text-gray-900">{log.title}</h4>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    {new Date(log.date + 'T12:00:00Z').toLocaleDateString('pt-BR')}
+                                </p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <button onClick={() => handleStartEdit(log)} title="Editar" className="p-2 text-gray-500 hover:text-blue-600"><Edit size={18} /></button>
+                                <button onClick={() => setItemToDelete(log.id)} title="Excluir" className="p-2 text-gray-500 hover:text-red-600"><Trash2 size={18} /></button>
+                            </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-4">
+                                <p><strong className="font-semibold">Projeto:</strong> {log.project}</p>
+                                <p><strong className="font-semibold">Responsável:</strong> {log.responsible}</p>
+                                <p><strong className="font-semibold">Tempo:</strong> {log.timeSpent}</p>
+                            </div>
+                            <h5 className="font-semibold text-gray-800 mb-2">Detalhes da Atividade:</h5>
+                            <p className="text-gray-700 whitespace-pre-wrap">{log.details}</p>
+                        </div>
+                    </div>
+                ))}
             </div>
+
+            {/* Modal de Confirmação para Excluir (assumindo que você tem um componente ConfirmModal) */}
+            {itemToDelete && (
+                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                    <div className="bg-white p-6 rounded-lg shadow-xl">
+                        <h4 className="text-lg font-bold">Confirmar Exclusão</h4>
+                        <p className="my-4">Tem certeza que deseja excluir este registro?</p>
+                        <div className="flex justify-end gap-4">
+                            <button onClick={() => setItemToDelete(null)} className="px-4 py-2 bg-gray-200 rounded-lg">Cancelar</button>
+                            <button onClick={handleDeleteLog} className="px-4 py-2 bg-red-600 text-white rounded-lg">Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

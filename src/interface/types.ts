@@ -18,11 +18,19 @@ export interface TaskItem {
   priority: 'baixa' | 'media' | 'alta'
 }
 
+// Em seu arquivo /interface/types.ts
+
 export interface ActivityLog {
-    id:string;
-    activities: string;
-    date: string;
+  id: string;
+  title: string;       // Novo: "Análise do Repositório GetPostDataBank"
+  project: string;     // Novo: "Análise de Repositórios — Invista"
+  responsible: string; // Novo: "Seu nome ou cargo"
+  timeSpent: string;   // Novo: "8h"
+  details: string;     // O conteúdo principal, antes chamado de "activities"
+  date: string;
 }
+
+// ... outras interfaces
 
 export interface PageProps {
     userId: string;
