@@ -2,9 +2,9 @@ import { useEffect, useState, type FC } from "react";
 import type { ActivityLog, PageProps } from "../interface/types";
 import { addDoc, collection, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
-import { Edit, Trash2 } from "lucide-react"; // Adicionando ícones para botões
+// --- 1. IMPORTAR O NOVO ÍCONE ---
+import { Edit, Trash2, ClipboardCopy } from "lucide-react";
 
-// Estado inicial para o formulário de um novo log
 const initialLogState = {
     title: '',
     project: '',
@@ -16,13 +16,9 @@ const initialLogState = {
 
 export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
     const [logs, setLogs] = useState<ActivityLog[]>([]);
-    // --- ESTADO MODIFICADO PARA O FORMULÁRIO ESTRUTURADO ---
     const [newLogData, setNewLogData] = useState<Omit<ActivityLog, 'id'>>(initialLogState);
-    
-    // --- ESTADOS PARA EDIÇÃO E EXCLUSÃO ---
     const [editingLog, setEditingLog] = useState<ActivityLog | null>(null);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-    
     const [notification, setNotification] = useState<{ message: string; type: string } | null>(null);
     const logsCollectionPath = `artifacts/${appId}/users/${userId}/activityLogs`;
 
@@ -42,10 +38,8 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    // --- FUNÇÃO DE INPUT GENÉRICA PARA O FORMULÁRIO ---
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        // Se estiver editando, atualiza o estado de edição, senão, o de novo log
         if (editingLog) {
             setEditingLog({ ...editingLog, [name]: value });
         } else {
@@ -53,29 +47,24 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
         }
     };
 
-    // --- LÓGICA DE SALVAR MODIFICADA ---
     const handleSaveLog = async () => {
         const dataToSave = editingLog ? { ...editingLog } : { ...newLogData };
-
         if (!dataToSave.title || !dataToSave.details) {
             showNotification('Título e Detalhes são campos obrigatórios.', 'error');
             return;
         }
-
         try {
             if (editingLog) {
-                // Atualiza um log existente
                 const logDocRef = doc(db, logsCollectionPath, editingLog.id);
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { id, ...logToUpdate } = editingLog; // Remove o ID do objeto a ser salvo
+                const { id, ...logToUpdate } = editingLog;
                 await updateDoc(logDocRef, logToUpdate);
                 showNotification('Registro atualizado com sucesso!');
-                setEditingLog(null); // Sai do modo de edição
+                setEditingLog(null);
             } else {
-                // Adiciona um novo log
                 await addDoc(collection(db, logsCollectionPath), dataToSave);
                 showNotification('Atividade registrada com sucesso!');
-                setNewLogData(initialLogState); // Limpa o formulário
+                setNewLogData(initialLogState);
             }
         } catch (error) {
             showNotification('Ocorreu um erro ao salvar o registro.', 'error');
@@ -83,10 +72,9 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
         }
     };
 
-    // --- FUNÇÕES PARA EDIÇÃO E EXCLUSÃO ---
     const handleStartEdit = (log: ActivityLog) => {
         setEditingLog(log);
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo para ver o formulário
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleCancelEdit = () => {
@@ -101,11 +89,30 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
         } catch (error) {
             showNotification('Falha ao excluir o registro.', 'error');
         } finally {
-            setItemToDelete(null); // Fecha o modal de confirmação (implícito)
+            setItemToDelete(null);
         }
     };
 
-    // Determina qual objeto de dados usar no formulário (novo ou em edição)
+    // --- 2. NOVA FUNÇÃO PARA COPIAR O CONTEÚDO FORMATADO ---
+    const handleCopyToClipboard = (log: ActivityLog) => {
+        const formattedDate = new Date(log.date + 'T12:00:00Z').toLocaleDateString('pt-BR');
+        
+        const reportText = `Registro de Atividade Técnica — ${log.title}\n` +
+                         `Data: ${formattedDate}\n` +
+                         `Responsável: ${log.responsible}\n` +
+                         `Projeto: ${log.project}\n` +
+                         `Tempo investido: ${log.timeSpent}\n\n` +
+                         `Atividades Realizadas:\n\n` +
+                         `${log.details}`;
+
+        navigator.clipboard.writeText(reportText).then(() => {
+            showNotification('Registro copiado para a área de transferência!');
+        }).catch(err => {
+            showNotification('Falha ao copiar o registro.', 'error');
+            console.error('Erro ao copiar para a área de transferência: ', err);
+        });
+    };
+
     const formDataSource = editingLog || newLogData;
 
     return (
@@ -116,13 +123,11 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
                 </div>
             )}
             
-            {/* --- NOVO FORMULÁRIO DE INSERÇÃO/EDIÇÃO --- */}
             <div className="bg-white p-6 rounded-lg shadow-md mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                     {editingLog ? 'Editar Registro de Atividade' : 'Adicionar Novo Registro'}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Campos do formulário */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Título</label>
                         <input type="text" name="title" value={formDataSource.title} onChange={handleInputChange} className="mt-1 block w-full p-2 border rounded-md shadow-sm" />
@@ -160,7 +165,6 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
                 </div>
             </div>
 
-            {/* --- NOVA EXIBIÇÃO EM FORMATO DE CARD --- */}
             <div className="space-y-6">
                  <h3 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Histórico de Atividades</h3>
                 {logs.map(log => (
@@ -173,6 +177,8 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
                                 </p>
                             </div>
                             <div className="flex items-center space-x-2">
+                                {/* --- 3. ADICIONAR O BOTÃO DE COPIAR --- */}
+                                <button onClick={() => handleCopyToClipboard(log)} title="Copiar Registro" className="p-2 text-gray-500 hover:text-green-600"><ClipboardCopy size={18} /></button>
                                 <button onClick={() => handleStartEdit(log)} title="Editar" className="p-2 text-gray-500 hover:text-blue-600"><Edit size={18} /></button>
                                 <button onClick={() => setItemToDelete(log.id)} title="Excluir" className="p-2 text-gray-500 hover:text-red-600"><Trash2 size={18} /></button>
                             </div>
@@ -190,7 +196,6 @@ export const ActivityLogPage: FC<PageProps> = ({ userId, appId }) => {
                 ))}
             </div>
 
-            {/* Modal de Confirmação para Excluir (assumindo que você tem um componente ConfirmModal) */}
             {itemToDelete && (
                  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
                     <div className="bg-white p-6 rounded-lg shadow-xl">
